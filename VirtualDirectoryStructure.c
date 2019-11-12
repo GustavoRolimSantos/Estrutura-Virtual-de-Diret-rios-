@@ -4,120 +4,119 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <locale.h>
- 
-const rmConst = 9999;
- 
+
+const int rmConst = 9999;
+
 char nome[8][1023];
 char data[10][1023];
 char hora[8][1023];
 int pai[1023];
- 
+
 int posicaoAtual = 0;
 int codDir = 0;
- 
+
 void setup() {
-    setlocale(NULL, "Portuguese");
- 
+    setlocale(LC_ALL, "Portuguese");
+
     nome[0][0] = '/';
-    data[0][0] = 'XX';
-    hora[0][0] = 'XX';
+    data[0][0] = 'X';
+    hora[0][0] = 'X';
     pai[0] = 0;
- 
+
     printf("========================> Trabalho Especial S.O <========================\n\n");
     printf("Bem vindo ao trabalho especial da matéria de\nSistemas Operacionais, Fatec Americana - 2º Semestre 2019.\n");
     printf("\nPara saber as funcionalidades e os comandos disponíveis digite 'help'.\n");
     printf("\n========================> Trabalho Especial S.O <========================\n");
 }
- 
+
 void pwd() {
     for (int i = 0; i < posicaoAtual + 1; i++) {
        printf("%s", nome[i]);
- 
+
         if (i > 0)
             printf("/");
     }
     printf("\n");
 }
- 
+
 void mkdir(char nomeP[8]) {
- 
+
     for (int i = 1; i <= codDir; i++) {
-        if (strcmp(nomeP, nome[codDir]) == 0 && pai[i] == posicaoAtual + 1) {
+        if (strcmp(nomeP, nome[i]) == 0 && pai[i] == posicaoAtual) {
             printf("(!) Não é possível criar o diretório indicado. Causa: O diretório já existe.\n");
             return;
         }
     }
- 
+
     codDir++;
- 
+
     for (int i = 0; i < 8; i++) {
         nome[codDir][i] = nomeP[i];
     }
- 
+
     struct tm * tm;
     time_t t;
- 
+
     time(&t);
     tm = localtime(&t);
     strftime(data[codDir], 10, "%d-%m-%y", tm);
- 
+
     time(&t);
     tm = localtime(&t);
     strftime(hora[codDir], 100, "%H:%M:%S", tm);
- 
-    pai[codDir] = codDir;
+
+    pai[codDir] = posicaoAtual;
 }
- 
+
 void rmdir(char param[8]) {
     if (codDir == 0) {
         printf("(!) Diretório informado não encontrado.\n");
         return;
     }
- 
+
     bool found = false;
- 
+
     for (int i = 1; i <= codDir; i++) {
-        if (strcmp(nome[i], param) == 0 && pai[i] == posicaoAtual + 1) {
+        if (strcmp(nome[i], param) == 0 && pai[i] == posicaoAtual) {
             bool hasSon = false;
- 
+
             for (int j = 1; j <= codDir; j++) {
-                if ((pai[i]+1) == pai[j]) {
+                if (pai[j] == posicaoAtual + 1 && (posicaoAtual + 1) == i) {
                     hasSon = true;
                 }
             }
- 
+
             if (hasSon) {
                 printf("(!) Não é possível remover o diretório indicado. Causa: O diretório não está vazio.\n");
                 return;
             }
- 
+
             pai[i] = rmConst;
             found = true;
         }
     }
- 
+
     if (!found) {
          printf("(!) Diretório informado não encontrado.\n");
     }
-    codDir--;
 }
- 
+
 void ls(bool lParam) {
    if (lParam) {
         for (int i = 1; i <= codDir; i++) {
-            if (pai[i] != rmConst && pai[i] == posicaoAtual + 1) {
+            if (pai[i] != rmConst && pai[i] == posicaoAtual) {
                 printf("%s %s %s\n", nome[i], data[i], hora[i]);
             }
         }
    } else {
         for (int i = 1; i <= codDir; i++) {
-             if (pai[i] != rmConst && pai[i] == posicaoAtual + 1) {
+             if (pai[i] != rmConst && pai[i] == posicaoAtual) {
                 printf("%s\n", nome[i]);
              }
         }
    }
 }
- 
+
 void cd(char param[8]) {
     if (strcmp(param, "..") == 0) {
         if (posicaoAtual > 0) {
@@ -130,28 +129,28 @@ void cd(char param[8]) {
             printf("(!) Diretório informado não encontrado.\n");
             return;
         }
- 
+
         bool found = false;
- 
+
         for (int i = 1; i <= codDir; i++) {
-            if (strcmp(nome[i], param) == 0 && pai[i] == posicaoAtual + 1) {
+            if (strcmp(nome[i], param) == 0 && pai[i] == posicaoAtual) {
                  if (pai[i] != rmConst) {
-                     posicaoAtual = pai[i];
+                     posicaoAtual = pai[i] + 1;
                      found = true;
                  }
             }
         }
- 
+
         if (!found) {
             printf("(!) Diretório informado não encontrado.\n");
         }
     }
 }
- 
+
 void clear() {
     system("cls");
 }
- 
+
 void copyright () {
     printf("\n=-=-=-=-= Trabalho Especial S.O =-=-=-=-=\n");
     printf("\nTrabalho da matéria de S.0 I,\nda Fatec Americana - 2º Semestre 2019.");
@@ -162,7 +161,7 @@ void copyright () {
     printf("- Vinicius Penachioni Tenomaro \n\n");
     printf("\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
 }
- 
+
 void help() {
     printf("\n===============================> AJUDA <===============================\n\n");
     printf("pwd - Exibe o caminho de diretórios atual.\n");
@@ -177,41 +176,69 @@ void help() {
     printf("copyright - Exibe os créditos dos desenvolvedores.\n");
     printf("date - Exibe data e hora.\n");
     printf("poweroff - Desliga a máquina.\n");
+    printf("\nPara saber os parametros de cada comando digite help nome_do_comando.\n");
     printf("\n===========================> COMANDOS DO S.O <===========================\n");
 }
- 
+
+void helpCommand(char *param) {
+    if (strcmp(param, "pwd") == 0) {
+        printf("pwd - Exibe o caminho de diretórios atual.\n");
+    } else if (strcmp(param, "mkdir") == 0) {
+         printf("mkdir - Cria um diretório. <Use: mkdir nome_do_diretório>\n");
+    } else if (strcmp(param, "ls") == 0) {
+        printf("ls - Lista os diretórios no caminho atual.\n");
+        printf("ls -l - Lista os diretórios do caminho atual com informações de data e hora.\n");
+    } else if (strcmp(param, "rmdir") == 0) {
+        printf("rmdir - Remove um diretório. <Use: rmdir nome_do_diretório>\n");
+    } else if (strcmp(param, "cd") == 0) {
+        printf("cd - Vai para o diretório indicado. <Use: cd nome_do_diretório>.\n");
+        printf("cd .. - Volta para o diretório anterior.\n");
+        printf("cd / - Volta para o diretório raiz.\n");
+    } else if (strcmp(param, "clear") == 0) {
+       printf("clear - Limpa o prompt.\n");
+    } else if (strcmp(param, "copyright") == 0) {
+        printf("copyright - Exibe os créditos dos desenvolvedores.\n");
+    } else if (strcmp(param, "date") == 0) {
+        printf("date - Exibe data e hora.\n");
+    } else if (strcmp(param, "poweroff") == 0) {
+        printf("poweroff - Desliga a máquina.\n");;
+    } else {
+        printf("\nOpção inválida! Digite help para ver os comandos.");
+    }
+}
+
 void date() {
     char data5[100];
- 
+
     struct tm * tm;
     time_t t;
- 
+
     time(&t);
     tm = localtime(&t);
     strftime(data5, 100, "%m/%d/%Y %H:%M:%S", tm);
- 
+
     printf("\n%s", data5);
 }
- 
+
 int main() {
     setup();
- 
+
     char line[80];
     char *command, *param;
- 
+
     bool off = false;
- 
+
     while(!off) {
-        printf("\n$ ");
+        printf("$ ");
         gets(line);
         command = strtok(line, " ");
         param = strtok(NULL, "\0");
- 
+
         if (command == NULL) {
             printf("\nOpção inválida! Digite help para ver os comandos.");
             continue;
         }
- 
+
         if (strcmp(command, "pwd") == 0) {
             pwd();
         } else if (strcmp(command, "pwd") == 0) {
@@ -240,8 +267,10 @@ int main() {
             clear();
         } else if (strcmp(command, "copyright") == 0) {
             copyright();
-        } else if (strcmp(command, "help") == 0) {
+        } else if (strcmp(command, "help") == 0 && param == NULL) {
             help();
+        } else if (strcmp(command, "help") == 0) {
+            helpCommand(param);
         } else if (strcmp(command, "date") == 0) {
             date();
         } else if (strcmp(command, "poweroff") == 0) {
@@ -251,6 +280,7 @@ int main() {
             printf("\nOpção inválida! Digite help para ver os comandos.");
         }
     }
- 
+
     return 0;
 }
+
